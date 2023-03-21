@@ -1,3 +1,4 @@
-function hello()
-    println("Hello, world!")
+function loadGraph(path) 
+    pwd()
+    return loadgraph(path, "graph_key", EdgeListFormat())
 end

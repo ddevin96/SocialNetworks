@@ -1,7 +1,9 @@
 module SocialNetworks
 
+using Graphs
+using GraphIO
 
-export hello
+export loadGraph
 
 include("tools.jl")
 
