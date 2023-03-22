@@ -21,23 +21,8 @@ function diffusionMia(G, S, thresholds)
                     push!(active[i], u)
                 end
             end
-            # println(v)
-            # if v in active[i-1]
-            #     continue
-            # end
-            # println(active[i])
-            # println(active[i-1])
-            # intersection = intersect(active[i-1], Set(all_neighbors(G,v)))
-            # println("intersection ", length(intersection))
-            # if length(intersection) >= thresholds[v]
-            #     push!(active[i], v)
-            # end
         end
-        if length(active[i]) == length(vertices(G))
-            println("Diffusion completed!")
-            break
-        end
-        if length(active[i]) == length(active[i-1])
+        if length(active[i]) == length(vertices(G)) || length(active[i]) == length(active[i-1])
             println("similar len in diffusion -- break at step $i")
             break
         end
