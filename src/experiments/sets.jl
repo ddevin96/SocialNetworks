@@ -1,6 +1,16 @@
+# using Distributed
+# addprocs(1)
+# @everywhere begin
+#     using Pkg; Pkg.activate(".") 
+#     Pkg.instantiate(); Pkg.precompile()
+#     using .SocialNetworks
+#     using Graphs
+   
+# end
+
+
 using SocialNetworks
 using Graphs
-
 function diffusionMia(G, S, thresholds)
     active = Dict()
     active[1] = S
@@ -9,7 +19,7 @@ function diffusionMia(G, S, thresholds)
         # println("step $i: ")
         active[i] = deepcopy(active[i-1])
         # for v in vertices(G)
-        for v in active[i-1]
+         for v in collect(active[i-1])
             for u in all_neighbors(G,v)
                 if u in active[i-1] || u in active[i]
                     continue
@@ -77,6 +87,10 @@ function MTS(g, thresholds, l)
         # println("=============================")
         # println("S size: $(length(S))")
         pool = setdiff(setdiff(V, ActiveS), L)
+        # println(pool)
+        # if length(pool) == 0
+        #     break
+        # end
         # v = -1
         max_value = -1
         maxs = Set()
@@ -94,7 +108,7 @@ function MTS(g, thresholds, l)
                 end
             end
         end
-
+        
         v = rand(maxs)
 
         push!(L, v)
@@ -124,7 +138,7 @@ function MTS(g, thresholds, l)
 end
 
 # g = loadGraph("data/ca-AstroPh.txt")
-g = load_my_graph("data/facebook.edges")
+g = load_my_graph("data/wiki-Vote.edges")
 # g = load_my_graph("data/karate.txt")
 
 V = Set()
