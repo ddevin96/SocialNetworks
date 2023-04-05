@@ -1,16 +1,13 @@
-# using Distributed
-# addprocs(1)
-# @everywhere begin
-#     using Pkg; Pkg.activate(".") 
-#     Pkg.instantiate(); Pkg.precompile()
-#     using .SocialNetworks
-#     using Graphs
-   
-# end
+using Distributed
+addprocs(8)
+@everywhere begin
+    using Pkg; Pkg.activate(".") 
+    Pkg.instantiate(); Pkg.precompile()
+    using SocialNetworks
+    using Graphs
 
-
-using SocialNetworks
-using Graphs
+# using SocialNetworks
+# using Graphs
 function diffusionMia(G, S, thresholds)
     active = Dict()
     active[1] = S
@@ -77,6 +74,10 @@ function MTS(g, thresholds, l)
     ActiveS = Set{Int64}()
     sigmaV = Dict()
     kV = Dict()
+    V = Set()
+    for v in vertices(g)
+        push!(V, v)
+    end
 
     for v in vertices(g)
         sigmaV[v] = degree(g, v)
@@ -137,21 +138,55 @@ function MTS(g, thresholds, l)
     return S, ActiveS
 end
 
+#end distributed.jl
+end
+
+graphs = ["karate.edges", "wiki-Vote.edges", "ca-AstroPh.edges", "email-EU-core.edges", "facebook.edges"]
+# graphs = ["karate.edges"]
+
+result = @distributed (append!) for graph in graphs
+    g = load_my_graph("data/$graph")
+   
+    thresholds = Dict()
+
+    for v in vertices(g)
+        thresholds[v] = degree(g, v) / 2
+    end
+    l = length(vertices(g)) / 2
+    avg = 0.0
+    #iterate 10 times
+    for i in 1:10
+       
+        S, activeS = MTS(g, thresholds, l)
+        avg += length(S)
+    end
+    avg = avg / 10
+    # l = length(vertices(g)) / 2
+    # S, activeS = MTS(g, thresholds, l)
+    
+    [avg]
+end
+
+
+# for g in graphs
+#     g = load_my_graph("data/$g")
+#     V = Set()
+#     for v in vertices(g)
+#         push!(V, v)
+#     end
+
+#     thresholds = Dict()
+
+#     for v in vertices(g)
+#         thresholds[v] = degree(g, v) / 2
+#     end
+#     #thresholds =[2,3,1,2,2]
+#     l = length(vertices(g)) / 2
+#     S, activeS = MTS(g, thresholds, l)
+#     length(S)
+# end
 # g = loadGraph("data/ca-AstroPh.txt")
-g = load_my_graph("data/wiki-Vote.edges")
+
 # g = load_my_graph("data/karate.txt")
 
-V = Set()
-for v in vertices(g)
-    push!(V, v)
-end
 
-thresholds = Dict()
-
-for v in vertices(g)
-    thresholds[v] = degree(g, v) / 2
-end
-#thresholds =[2,3,1,2,2]
-l = length(vertices(g)) / 2
-S, activeS = MTS(g, thresholds, l)
-length(S)
