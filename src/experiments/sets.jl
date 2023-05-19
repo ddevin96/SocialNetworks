@@ -156,7 +156,6 @@ result = @distributed (append!) for graph in graphs
     avg = 0.0
     #iterate 10 times
     for i in 1:10
-       
         S, activeS = MTS(g, thresholds, l)
         avg += length(S)
     end
