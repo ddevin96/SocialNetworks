@@ -140,9 +140,9 @@ end
 
 #end distributed.jl
 end
-
+iter = 10
 graphs = ["karate.edges", "wiki-Vote.edges", "ca-AstroPh.edges", "email-EU-core.edges", "facebook.edges"]
-# graphs = ["karate.edges"]
+#graphs = ["karate.edges","karate.edges","karate.edges","karate.edges"]
 
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
@@ -155,14 +155,12 @@ result = @distributed (append!) for graph in graphs
     l = length(vertices(g)) / 2
     avg = 0.0
     #iterate 10 times
-    for i in 1:10
+    for i in 1:iter
         S, activeS = MTS(g, thresholds, l)
         avg += length(S)
     end
     avg = avg / 10
-    # l = length(vertices(g)) / 2
-    # S, activeS = MTS(g, thresholds, l)
-    
+
     [avg]
 end
 
