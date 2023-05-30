@@ -1,10 +1,24 @@
+# Algo 1 MTS
+# Algo 2 Random, ordini in modo casuale tramite ricerca binaria, se con la meta scendi sotto di l vai destra sinistra, trovare il valore k : dopo la diffusione riesco ad attivare almeno l (trovare il piu piccolo k)
+# Algo 3 identico solo che l'ordinamento e dato dai gradi decrescenti
+# Algo 4 prendi il nodo di grado massimo, diffusione, se sei a l finito, altrimenti togli dal grafo tutti i nodi attivati e ricominci prendendo il nodo con grado massimo 
+# N numero di nodi
+# l 25,50,75 % di N 
+# Proportional thresholds 0.25,0.5,0.75
+# th = 0.25,0.50,0.75 degree
+# Random thresholds where for each node v the threshold
+# t(v) is chosen uniformly at random in the interval [1, d(v)];
+# Experiments 4 (algo) x 3 (l) x 4 (th)
+# 10 networks 
+
 using Distributed
-addprocs(8)
+addprocs(2)
 @everywhere begin
     using Pkg; Pkg.activate(".") 
     Pkg.instantiate(); Pkg.precompile()
     using SocialNetworks
     using Graphs
+    using Random
 
 # using SocialNetworks
 # using Graphs
@@ -138,12 +152,193 @@ function MTS(g, thresholds, l)
     return S, ActiveS
 end
 
+# Algo 2 Random, ordini in modo casuale tramite ricerca binaria, se con la metà scendi sotto di l vai destra sinistra, trovare il valore k : dopo la diffusione riesco ad attivare almeno l (trovare il piu piccolo k)
+function algoDegree(g, thresholds, l)
+    S = Set{Int64}()
+    L = Set{Int64}()
+    ActiveS = Set{Int64}()
+    sigmaV_or = Dict()
+    kV_or = Dict()
+    V = Set()
+    for v in vertices(g)
+        push!(V, v)
+    end
+
+    # random order of V
+    
+    # cast V into a list
+    my_list = collect(V)
+    # order the list by degree of nodes
+    sort!(my_list, by = x -> degree(g, x))
+    my_list_size = length(my_list)
+    pivot = my_list_size * 2
+    for v in vertices(g)
+        sigmaV_or[v] = degree(g, v)
+        kV_or[v] = Float64(thresholds[v])
+    end
+
+    increase_size = false
+    counter = 20
+    best_k = 0
+    while counter > 0
+        println("counter $counter")
+        S = Set{Int64}()
+        L = Set{Int64}()
+        ActiveS = Set{Int64}()
+        sigmaV = deepcopy(sigmaV_or)
+        kV = deepcopy(kV_or)
+
+        if !increase_size
+            pivot = pivot / 2
+            println("dimezzo pivot $pivot")
+        else 
+            # pivot = (pivot + ((my_list_size - pivot)/ 2))
+            pivot = (pivot + pivot/2)
+            println("aumento $pivot")
+        end
+        # cast pivot to int
+        pivot = Int64(floor(pivot))
+        
+        # v = rand(maxs)
+        for u in my_list[1:pivot]
+            push!(L, u)
+        end
+        # println("l: $L");
+        for v in L
+            for u in all_neighbors(g,v)
+                intersection = intersect(union(L, ActiveS), Set(all_neighbors(g,u)))
+                sigmaV[u] = degree(g, u) - length(intersection)
+            end
+        end
+        
+        remains = setdiff(V, ActiveS)
+        for u in remains
+            if sigmaV[u] < kV[u]
+                push!(S, u)
+                # println("S $S")
+                ActiveS = diffusionMia(g, S, thresholds)
+                for w in all_neighbors(g,u)
+                    intersection = intersect(union(L, ActiveS), Set(all_neighbors(g,w)))
+                    sigmaV[w] = degree(g, w) - length(intersection)
+                    kV[w] = max(0.0, thresholds[w] - length(intersect(ActiveS, Set(all_neighbors(g,w)))))
+                end
+            end
+        end
+
+        if length(ActiveS) < l
+            increase_size = true
+        else
+            increase_size = false
+            best_k = length(S)
+        end
+
+        # println("ActiveS: $ActiveS")
+        counter -= 1
+    end
+
+    println("---- best k $best_k\n")
+
+    # return S, ActiveS
+    return best_k
+end
+
+function algoRandom(g, thresholds, l)
+    S = Set{Int64}()
+    L = Set{Int64}()
+    ActiveS = Set{Int64}()
+    sigmaV_or = Dict()
+    kV_or = Dict()
+    V = Set()
+    for v in vertices(g)
+        push!(V, v)
+    end
+
+    # random order of V
+    
+    # cast V into a list
+    my_list = collect(V)
+    # shuffle the list
+    shuffle!(my_list)
+    my_list_size = length(my_list)
+    pivot = my_list_size * 2
+    for v in vertices(g)
+        sigmaV_or[v] = degree(g, v)
+        kV_or[v] = Float64(thresholds[v])
+    end
+
+    increase_size = false
+    counter = 20
+    best_k = 0
+    while counter > 0
+        # println("counter $counter")
+        S = Set{Int64}()
+        L = Set{Int64}()
+        ActiveS = Set{Int64}()
+        sigmaV = deepcopy(sigmaV_or)
+        kV = deepcopy(kV_or)
+
+        if !increase_size
+            pivot = pivot / 2
+            # println("dimezzo pivot $pivot")
+        else 
+            # pivot = (pivot + ((my_list_size - pivot)/ 2))
+            pivot = (pivot + pivot/2)
+            # println("aumento $pivot")
+        end
+        # cast pivot to int
+        pivot = Int64(floor(pivot))
+        
+        # v = rand(maxs)
+        for u in my_list[1:pivot]
+            push!(L, u)
+        end
+        # println("l: $L");
+        for v in L
+            for u in all_neighbors(g,v)
+                intersection = intersect(union(L, ActiveS), Set(all_neighbors(g,u)))
+                sigmaV[u] = degree(g, u) - length(intersection)
+            end
+        end
+        
+        remains = setdiff(V, ActiveS)
+        for u in remains
+            if sigmaV[u] < kV[u]
+                push!(S, u)
+                # println("S $S")
+                ActiveS = diffusionMia(g, S, thresholds)
+                for w in all_neighbors(g,u)
+                    intersection = intersect(union(L, ActiveS), Set(all_neighbors(g,w)))
+                    sigmaV[w] = degree(g, w) - length(intersection)
+                    kV[w] = max(0.0, thresholds[w] - length(intersect(ActiveS, Set(all_neighbors(g,w)))))
+                end
+            end
+        end
+
+        if length(ActiveS) < l
+            increase_size = true
+        else
+            increase_size = false
+            best_k = length(S)
+        end
+
+        # println("ActiveS: $ActiveS")
+        counter -= 1
+    end
+
+    println("---- best k $best_k\n")
+
+    # return S, ActiveS
+    return best_k
+end
+
 #end distributed.jl
 end
-iter = 10
-graphs = ["karate.edges", "wiki-Vote.edges", "ca-AstroPh.edges", "email-EU-core.edges", "facebook.edges"]
-#graphs = ["karate.edges","karate.edges","karate.edges","karate.edges"]
 
+iter = 10
+# graphs = ["karate.edges", "wiki-Vote.edges", "ca-AstroPh.edges", "email-EU-core.edges", "facebook.edges"]
+graphs = ["karate.edges"]
+#graphs = ["karate.edges","karate.edges","karate.edges","karate.edges"]
+println("---- MTS\n")
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
    
@@ -164,6 +359,47 @@ result = @distributed (append!) for graph in graphs
     [avg]
 end
 
+println("---- Random\n")
+result = @distributed (append!) for graph in graphs
+    g = load_my_graph("data/$graph")
+   
+    thresholds = Dict()
+
+    for v in vertices(g)
+        thresholds[v] = degree(g, v) / 2
+    end
+    l = length(vertices(g)) / 2
+    avg = 0.0
+    #iterate 10 times
+    for i in 1:iter
+        best_k = algoRandom(g, thresholds, l)
+        avg += best_k
+    end
+    avg = avg / 10
+
+    [avg]
+end
+
+println("---- DEGREE\n")
+result = @distributed (append!) for graph in graphs
+    g = load_my_graph("data/$graph")
+   
+    thresholds = Dict()
+
+    for v in vertices(g)
+        thresholds[v] = degree(g, v) / 2
+    end
+    l = length(vertices(g)) / 2
+    avg = 0.0
+    #iterate 10 times
+    for i in 1:iter
+        best_k = algoDegree(g, thresholds, l)
+        avg += best_k
+    end
+    avg = avg / 10
+
+    [avg]
+end
 
 # for g in graphs
 #     g = load_my_graph("data/$g")
@@ -183,7 +419,4 @@ end
 #     length(S)
 # end
 # g = loadGraph("data/ca-AstroPh.txt")
-
 # g = load_my_graph("data/karate.txt")
-
-
