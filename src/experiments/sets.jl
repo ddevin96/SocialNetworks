@@ -342,13 +342,31 @@ function test_set(G, S)
             hm[u] = 1
         end
     end
-    # is_connected(g) ?
-    for x in vertices(G)
-        if !haskey(hm, x)
-            return false
+    if is_connected(G)
+        # println("G is connected")
+        for x in vertices(G)
+            if !haskey(hm, x)
+                return false
+            end
         end
+        return true
+    else
+        # println("G is not connected")
+        comps = strongly_connected_components(G)
+        # select the biggest component array
+        biggest = 0
+        for i in 1:length(comps)
+            if length(comps[i]) > length(comps[biggest])
+                biggest = i
+            end
+        end
+        for y in comps[biggest]
+            if !haskey(hm, y)
+                return false
+            end
+        end
+        return true
     end
-    return true
 end
 
 #end distributed.jl
