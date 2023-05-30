@@ -269,6 +269,8 @@ function algoRandom(g, thresholds, l)
     increase_size = false
     counter = 20
     best_k = 0
+    best_S = Set{Int64}()
+
     while counter > 0
         # println("counter $counter")
         S = Set{Int64}()
@@ -319,6 +321,7 @@ function algoRandom(g, thresholds, l)
         else
             increase_size = false
             best_k = length(S)
+            best_S = deepcopy(S)
         end
 
         # println("ActiveS: $ActiveS")
@@ -328,7 +331,24 @@ function algoRandom(g, thresholds, l)
     println("---- best k $best_k\n")
 
     # return S, ActiveS
-    return best_k
+    return best_k, best_S
+end
+
+function test_set(G, S)
+    hm = Dict()
+    for v in S
+        hm[v] = 1
+        for u in all_neighbors(G, v)
+            hm[u] = 1
+        end
+    end
+    # is_connected(g) ?
+    for x in vertices(G)
+        if !haskey(hm, x)
+            return false
+        end
+    end
+    return true
 end
 
 #end distributed.jl
@@ -352,6 +372,7 @@ result = @distributed (append!) for graph in graphs
     #iterate 10 times
     for i in 1:iter
         S, activeS = MTS(g, thresholds, l)
+        println("S is a real set? $(test_set(g, S))")
         avg += length(S)
     end
     avg = avg / 10
@@ -372,7 +393,8 @@ result = @distributed (append!) for graph in graphs
     avg = 0.0
     #iterate 10 times
     for i in 1:iter
-        best_k = algoRandom(g, thresholds, l)
+        best_k, S = algoRandom(g, thresholds, l)
+        println("S is a real set? $(test_set(g, S))")
         avg += best_k
     end
     avg = avg / 10
