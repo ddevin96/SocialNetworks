@@ -281,20 +281,16 @@ function algoRandom(g, thresholds, l)
 
         if !increase_size
             pivot = pivot / 2
-            # println("dimezzo pivot $pivot")
         else 
-            # pivot = (pivot + ((my_list_size - pivot)/ 2))
             pivot = (pivot + pivot/2)
-            # println("aumento $pivot")
         end
         # cast pivot to int
         pivot = Int64(floor(pivot))
         
-        # v = rand(maxs)
         for u in my_list[1:pivot]
             push!(L, u)
         end
-        # println("l: $L");
+
         for v in L
             for u in all_neighbors(g,v)
                 intersection = intersect(union(L, ActiveS), Set(all_neighbors(g,u)))
@@ -306,7 +302,6 @@ function algoRandom(g, thresholds, l)
         for u in remains
             if sigmaV[u] < kV[u]
                 push!(S, u)
-                # println("S $S")
                 ActiveS = diffusionMia(g, S, thresholds)
                 for w in all_neighbors(g,u)
                     intersection = intersect(union(L, ActiveS), Set(all_neighbors(g,w)))
@@ -324,7 +319,6 @@ function algoRandom(g, thresholds, l)
             best_S = deepcopy(S)
         end
 
-        # println("ActiveS: $ActiveS")
         counter -= 1
     end
 
@@ -403,13 +397,7 @@ function test_set_with_diffusion(G, S, thresholds)
         end
         i += 1
     end
-    if complete
-        # println("complete diffusion")
-        return true
-    else
-        # println("incomplete diffusion")
-        return false
-    end
+    return complete
 end
 
 #end distributed.jl
@@ -418,22 +406,25 @@ end
 iter = 10
 # graphs = ["karate.edges", "wiki-Vote.edges", "ca-AstroPh.edges", "email-EU-core.edges", "facebook.edges"]
 graphs = ["karate.edges"]
-#graphs = ["karate.edges","karate.edges","karate.edges","karate.edges"]
+
 println("---- MTS\n")
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
    
     thresholds = Dict()
-
     for v in vertices(g)
         thresholds[v] = degree(g, v) / 2
     end
+
     l = length(vertices(g)) / 2
     avg = 0.0
-    #iterate 10 times
+
     for i in 1:iter
         S, activeS = MTS(g, thresholds, l)
-        println("S is a real set? $(test_set(g, S))")
+        if !test_set_with_diffusion(g, S, thresholds)
+            println("S is not a real set")
+            # println(S)
+        end
         avg += length(S)
     end
     avg = avg / 10
@@ -446,16 +437,19 @@ result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
    
     thresholds = Dict()
-
     for v in vertices(g)
         thresholds[v] = degree(g, v) / 2
     end
+
     l = length(vertices(g)) / 2
     avg = 0.0
-    #iterate 10 times
+
     for i in 1:iter
         best_k, S = algoRandom(g, thresholds, l)
-        println("S is a real set? $(test_set(g, S))")
+        if !test_set_with_diffusion(g, S, thresholds)
+            println("S is not a real set")
+            # println(S)
+        end
         avg += best_k
     end
     avg = avg / 10
@@ -468,13 +462,13 @@ result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
    
     thresholds = Dict()
-
     for v in vertices(g)
         thresholds[v] = degree(g, v) / 2
     end
+
     l = length(vertices(g)) / 2
     avg = 0.0
-    #iterate 10 times
+
     for i in 1:iter
         best_k = algoDegree(g, thresholds, l)
         avg += best_k
@@ -483,8 +477,6 @@ result = @distributed (append!) for graph in graphs
 
     [avg]
 end
-
-
 
 # test all th and l
 result = @distributed (append!) for graph in graphs
@@ -518,7 +510,7 @@ result = @distributed (append!) for graph in graphs
                 avg += length(S)
             end
             avg = avg / 10
-
+            println("avg: $avg")
             [avg]
         end
     end
