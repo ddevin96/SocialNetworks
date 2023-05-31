@@ -369,6 +369,49 @@ function test_set(G, S)
     end
 end
 
+function test_set_with_diffusion(G, S, thresholds)
+    active = Dict()
+    active[1] = S
+    i = 2
+    complete = false
+
+    while true
+        # println("step $i: ")
+        active[i] = deepcopy(active[i-1])
+        # for v in vertices(G)
+         for v in collect(active[i-1])
+            for u in all_neighbors(G,v)
+                if u in active[i-1] || u in active[i]
+                    continue
+                end
+                intersection = intersect(active[i-1], Set(all_neighbors(G,u)))
+                # println("intersection ", length(intersection))
+                # println("thresholds ", thresholds[u])
+                if length(intersection) >= thresholds[u]
+                    # println("add $u to active at step $i")
+                    push!(active[i], u)
+                end
+            end
+        end
+        if length(active[i]) == length(vertices(G))
+            complete = true
+            break
+        end
+        if length(active[i]) == length(active[i-1])
+            # println("similar len in diffusion -- break at step $i")
+            break
+        end
+        i += 1
+    end
+    if complete
+        # println("complete diffusion")
+        return true
+    else
+        # println("incomplete diffusion")
+        return false
+    end
+end
+
 #end distributed.jl
 end
 
@@ -441,22 +484,45 @@ result = @distributed (append!) for graph in graphs
     [avg]
 end
 
-# for g in graphs
-#     g = load_my_graph("data/$g")
-#     V = Set()
-#     for v in vertices(g)
-#         push!(V, v)
-#     end
 
-#     thresholds = Dict()
 
-#     for v in vertices(g)
-#         thresholds[v] = degree(g, v) / 2
-#     end
-#     #thresholds =[2,3,1,2,2]
-#     l = length(vertices(g)) / 2
-#     S, activeS = MTS(g, thresholds, l)
-#     length(S)
-# end
-# g = loadGraph("data/ca-AstroPh.txt")
-# g = load_my_graph("data/karate.txt")
+# test all th and l
+result = @distributed (append!) for graph in graphs
+    g = load_my_graph("data/$graph")
+    
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    all_th = [0.25, 0.5, 0.75, 1.0]
+    for i in 1:4 # l
+        for j in 1:4 # th
+            println("MTS -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
+            thresholds = Dict()
+            if j != 4
+                for v in vertices(g)
+                    thresholds[v] = degree(g, v) * all_th[j]
+                end
+            else
+                for v in vertices(g)
+                    thresholds[v] = rand(1:degree(g, v))
+                end
+            end
+            l = all_l[i]
+            avg = 0.0
+            #iterate 10 times
+            for i in 1:iter
+                S, activeS = MTS(g, thresholds, l)
+                if !test_set_with_diffusion(g, S, thresholds)
+                    println("S is not a real set")
+                    println(S)
+                end
+                # println("S is a real set? $(test_set_with_diffusion(g, S, thresholds))")
+                avg += length(S)
+            end
+            avg = avg / 10
+
+            [avg]
+        end
+    end
+    
+
+    # [avg]
+end
