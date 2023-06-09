@@ -1,5 +1,7 @@
 using Distributed
-addprocs(2)
+# using CSV, Tables, DataFrames
+
+addprocs(4)
 @everywhere begin
     using Pkg; Pkg.activate(".") 
     Pkg.instantiate(); Pkg.precompile()
@@ -9,9 +11,11 @@ addprocs(2)
 end
 
 iter = 10
-# graphs = ["karate.edges", "wiki-Vote.edges", "ca-AstroPh.edges", "email-EU-core.edges", "facebook.edges"]
+graphs = ["karate.edges", "wiki-Vote.edges", "ca-AstroPh.edges", "email-EU-core.edges", "facebook.edges"]
 # graphs = ["karate.edges", "facebook.edges"]
-graphs = ["karate.edges"]
+# graphs = ["karate.edges"]
+# open a file to write
+
 
 # test all th and l
 result = @distributed (append!) for graph in graphs
@@ -19,6 +23,8 @@ result = @distributed (append!) for graph in graphs
     
     all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
     all_th = [0.25, 0.5, 0.75, 1.0]
+    all_avg = []
+    all_string = []
     for i in 1:4 # l
         for j in 1:4 # th
             thresholds = Dict()
@@ -41,14 +47,27 @@ result = @distributed (append!) for graph in graphs
                 else
                     println("SET OK -- MTS -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
                 end
+
                 avg += length(S)
             end
             avg = avg / iter
-            println("avg: $avg")
-            [avg]
+            append!(all_avg, [avg])
+            # stream =  open("../../results/$(graph).txt","a")
+            append!(all_string, "MTS \t| $(graph) | $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+
+
         end
     end
-    # [avg]
+    # write all_string to file
+    # open a file 
+    f =  open("././results/$(graph).txt", "w")
+    write(f, "ALGO \t| GRAPH \t\t| l \t| th \t| avg\n")
+    for i in 1:length(all_string)
+        write(f, all_string[i])
+    end
+    close(f)
+    # write(stream, all_string)
+    all_avg
 end
 
 result = @distributed (append!) for graph in graphs
@@ -56,6 +75,8 @@ result = @distributed (append!) for graph in graphs
     
     all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
     all_th = [0.25, 0.5, 0.75, 1.0]
+    all_avg = []
+    all_string = []
     for i in 1:4 # l
         for j in 1:4 # th
             # println("RANDOM -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
@@ -82,11 +103,18 @@ result = @distributed (append!) for graph in graphs
                 avg += length(best_S)
             end
             avg = avg / iter
-            println("avg: $avg")
-            [avg]
+            append!(all_avg, [avg])
+            append!(all_string, "RANDOM \t| $(graph) | $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+
         end
     end
-    # [avg]
+    f =  open("././results/$(graph).txt", "w")
+    write(f, "ALGO \t| GRAPH \t\t| l \t| th \t| avg\n")
+    for i in 1:length(all_string)
+        write(f, all_string[i])
+    end
+    close(f)
+    all_avg
 end
 
 result = @distributed (append!) for graph in graphs
@@ -94,6 +122,8 @@ result = @distributed (append!) for graph in graphs
     
     all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
     all_th = [0.25, 0.5, 0.75, 1.0]
+    all_avg = []
+    all_string = []
     for i in 1:4 # l
         for j in 1:4 # th
             # println("RANDOM -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
@@ -120,11 +150,17 @@ result = @distributed (append!) for graph in graphs
                 avg += length(best_S)
             end
             avg = avg / iter
-            println("avg: $avg")
-            [avg]
+            append!(all_avg, [avg])
+            append!(all_string, "MTS \t| $(graph) | $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
         end
     end
-    # [avg]
+    f =  open("././results/$(graph).txt", "w")
+    write(f, "ALGO \t| GRAPH \t\t| l \t| th \t| avg\n")
+    for i in 1:length(all_string)
+        write(f, all_string[i])
+    end
+    close(f)
+    all_avg
 end
 
 result = @distributed (append!) for graph in graphs
@@ -132,6 +168,9 @@ result = @distributed (append!) for graph in graphs
     
     all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
     all_th = [0.25, 0.5, 0.75, 1.0]
+    all_avg = []
+    all_string = []
+
     for i in 1:4 # l
         for j in 1:4 # th
             # println("MAX DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
@@ -158,9 +197,15 @@ result = @distributed (append!) for graph in graphs
                 avg += length(S)
             end
             avg = avg / iter
-            println("avg: $avg")
-            [avg]
+            append!(all_avg, [avg])
+            append!(all_string, "MTS \t| $(graph) | $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
         end
     end
-    # [avg]
+    f =  open("././results/$(graph).txt", "w")
+    write(f, "ALGO \t| GRAPH \t\t| l \t| th \t| avg\n")
+    for i in 1:length(all_string)
+        write(f, all_string[i])
+    end
+    close(f)
+    all_avg
 end
