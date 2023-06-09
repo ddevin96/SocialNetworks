@@ -111,7 +111,7 @@ function diffusionMiaWithBool(G, S, thresholds, bools)
         # for v in vertices(G)
          for v in collect(active[i-1])
             for u in all_neighbors(G,v)
-                if u in active[i-1] || u in active[i] || !bools[u]
+                if u in active[i-1] || u in active[i] || bools[u]
                     continue
                 end
                 intersection = intersect(active[i-1], Set(all_neighbors(G,u)))
@@ -241,13 +241,12 @@ function algoDegree(g, thresholds, l)
     for v in vertices(g)
         push!(V, v)
     end
-
-    # random order of V
     
     # cast V into a list
     my_list = collect(V)
     # shuffle the list
-    sort!(my_list, by = x -> degree(g, x))
+    sort!(my_list, by = x -> degree(g, x), rev = true)
+
     my_list_size = length(my_list)
     pivot = my_list_size * 2 
     prev_pivot_min = 0
@@ -271,8 +270,7 @@ function algoDegree(g, thresholds, l)
             pivot = (pivot + ((prev_pivot_max - pivot)/2))
             # println("increase pivot $pivot")
         end
-
-        
+   
         # cast pivot to int
         pivot = Int64(floor(pivot))
         
@@ -299,9 +297,6 @@ function algoDegree(g, thresholds, l)
 
     end
 
-    println("---- best k $best_k\n")
-
-    # return S, ActiveS
     return best_k, best_S
 end
 
@@ -374,7 +369,7 @@ function algoRandom(g, thresholds, l)
 
     end
 
-    println("---- best k $best_k\n")
+    # println("---- best k $best_k\n")
 
     # return S, ActiveS
     return best_k, best_S
