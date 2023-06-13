@@ -1,39 +1,4 @@
-function testSet(G, S)
-    hm = Dict()
-    for v in S
-        hm[v] = 1
-        for u in all_neighbors(G, v)
-            hm[u] = 1
-        end
-    end
-    if is_connected(G)
-        # println("G is connected")
-        for x in vertices(G)
-            if !haskey(hm, x)
-                return false
-            end
-        end
-        return true
-    else
-        # println("G is not connected")
-        comps = strongly_connected_components(G)
-        # select the biggest component array
-        biggest = 0
-        for i in 1:length(comps)
-            if length(comps[i]) > length(comps[biggest])
-                biggest = i
-            end
-        end
-        for y in comps[biggest]
-            if !haskey(hm, y)
-                return false
-            end
-        end
-        return true
-    end
-end
-
-function testSetWithDiffusion(G, S, thresholds)
+function testSetWithDiffusion(G, S, thresholds, l)
     active = Dict()
     active[1] = S
     i = 2
@@ -54,7 +19,7 @@ function testSetWithDiffusion(G, S, thresholds)
                 end
             end
         end
-        if length(active[i]) == length(vertices(G))
+        if length(active[i]) >= l
             complete = true
             break
         end
@@ -393,18 +358,30 @@ function algoMaxDegree(g, thresholds, l)
     sort!(my_list, by = x -> degree(g, x), rev = true)
     # create a list of boolean
     my_list_bool = Dict{Int64, Bool}()
+    my_list_degree = Dict{Int64, Int64}()
     for v in my_list
         my_list_bool[v] = false
+        my_list_degree[v] = degree(g, v)
     end
     # my_list_index = 1
 
     while length(my_list) > 0
+
         # println("my_list_size $(length(my_list))")
         # println("g size $(nv(gr))")
         ActiveS = Set{Int64}()
         
         # pop the first element of my_list
+        # sort by degree on residual graph
+        # threshold decrease by 1 for each node that go missing
         u = popfirst!(my_list)
+        max = 0
+        for key in keys(my_list_degree)
+            if my_list_degree[key] > max
+                max = my_list_degree[key]
+                u = key
+            end
+        end
         push!(S, u)
 
         ActiveS = diffusionMiaWithBool(g, S, thresholds, my_list_bool)
@@ -414,6 +391,14 @@ function algoMaxDegree(g, thresholds, l)
             for v in ActiveS
                 my_list_bool[v] = true
                 deleteat!(my_list, findall(x -> x == v, my_list))
+                for u in all_neighbors(g,v)
+                    if thresholds[u] > 1
+                        thresholds[u] -= 1
+                    end
+                    if my_list_degree[u] > 0
+                        my_list_degree[u] -= 1
+                    end
+                end
             end
         else
             # found the l
