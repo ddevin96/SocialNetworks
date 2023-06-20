@@ -10,21 +10,22 @@ addprocs(4)
     using Random
 end
 
-iter = 10
-# graphs = ["karate.edges", "wiki-Vote.edges", "ca-AstroPh.edges", "email-EU-core.edges", "facebook.edges"]
-graphs = ["karate.edges", "facebook.edges"]
-# graphs = ["karate.edges"]
+iter = 5
+graphs = ["karate.edges", "ca-AstroPh.edges", "ca-GrQc.edges", "ca-HepTh.edges", "CollegeMsg.edges", "email-EU-core.edges", "facebook.edges", "p2p.edges"]
+
+# write_graph_info(graphs)
 
 # test all th and l
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
 
-    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    # all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
     all_avg = []
     all_string = []
-    for i in 1:4 # l
+    for i in 1:3 # l
         for j in 1:4 # th
             thresholds = Dict()
             if j != 4
@@ -72,11 +73,11 @@ end
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
-    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
     all_avg = []
     all_string = []
-    for i in 1:4 # l
+    for i in 1:3 # l
         for j in 1:4 # th
             # println("RANDOM -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
             thresholds = Dict()
@@ -121,11 +122,11 @@ end
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
-    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
     all_avg = []
     all_string = []
-    for i in 1:4 # l
+    for i in 1:3 # l
         for j in 1:4 # th
             # println("RANDOM -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
             thresholds = Dict()
@@ -169,12 +170,12 @@ end
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
-    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
     all_avg = []
     all_string = []
 
-    for i in 1:4 # l
+    for i in 1:3 # l
         for j in 1:4 # th
             # println("MAX DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
             thresholds = Dict()
@@ -194,7 +195,7 @@ result = @distributed (append!) for graph in graphs
                 println("MAX DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
 
                 S, Active_S = algoMaxDegree(g, thresholds, l)
-                # if !testSetWithDiffusion(g, S, thresholds)
+                # if !testSetWithDiffusion(g, S, thresholds, l)
                 #     println("SET NOT OK -- MAX DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
                 # else
                 #     println("SET OK -- MAXDEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")

@@ -102,12 +102,16 @@ function diffusionMiaWithBool(G, S, thresholds, bools)
 end
 
 function load_my_graph(path)
+    # println("loading graph from $path")
     edges = readlines(path)
     g = Graph()
     hm = Dict()
     index = 1
     for i in 1:length(edges)
         line = split(edges[i], ",")
+        if length(line) < 2
+            continue
+        end
         v1 = parse(Int64, line[1])
         v2 = parse(Int64, line[2])
         if !haskey(hm, v1)
@@ -124,6 +128,16 @@ function load_my_graph(path)
         add_edge!(g, hm[v1], hm[v2])
     end
     return g
+end
+
+function write_graph_info(graphs)
+    f = open("info.txt", "w")
+    for graph in graphs
+        g = load_my_graph("data/$graph")
+        my_g = split(graph, ".")[1]
+        write(f, "$my_g \t| V: $(length(vertices(g))) \t| E: $(length(edges(g)))\n")
+    end
+    close(f)
 end
 
 function MTS(g, thresholds, l)
