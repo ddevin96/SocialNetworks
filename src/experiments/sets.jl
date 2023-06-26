@@ -10,8 +10,10 @@ addprocs(4)
     using Random
 end
 
-iter = 5
-graphs = ["karate.edges", "ca-AstroPh.edges", "ca-GrQc.edges", "ca-HepTh.edges", "CollegeMsg.edges", "email-EU-core.edges", "facebook.edges", "p2p.edges"]
+iter = 10
+# ca-Astro too much slow
+# graphs = ["karate.edges", "ca-AstroPh.edges", "ca-GrQc.edges", "ca-HepTh.edges", "CollegeMsg.edges", "email-EU-core.edges", "facebook.edges", "p2p.edges"]
+graphs = ["karate.edges", "ca-GrQc.edges", "ca-HepTh.edges", "CollegeMsg.edges", "email-EU-core.edges", "facebook.edges", "p2p.edges"]
 
 # write_graph_info(graphs)
 
@@ -20,12 +22,12 @@ result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
 
-    # all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
-    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    # all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
     all_avg = []
     all_string = []
-    for i in 1:3 # l
+    for i in 1:4 # l
         for j in 1:4 # th
             thresholds = Dict()
             if j != 4
@@ -53,7 +55,8 @@ result = @distributed (append!) for graph in graphs
             end
             avg = avg / iter
             append!(all_avg, [avg])
-            append!(all_string, "MTS \t| $(my_g) \t| $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+            # append!(all_string, "MTS \t| $(my_g) \t| $(all_l[i]) \t| $(all_th[j]) \t| $avg\n")
+            append!(all_string, "MTS,$(my_g),$(all_l[i]),$(all_th[j]),$avg\n")
 
 
         end
@@ -73,11 +76,12 @@ end
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
-    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    # all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
     all_avg = []
     all_string = []
-    for i in 1:3 # l
+    for i in 1:4 # l
         for j in 1:4 # th
             # println("RANDOM -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
             thresholds = Dict()
@@ -106,7 +110,8 @@ result = @distributed (append!) for graph in graphs
             end
             avg = avg / iter
             append!(all_avg, [avg])
-            append!(all_string, "RANDOM \t| $(my_g) \t| $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+            # append!(all_string, "RANDOM \t| $(my_g) \t| $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+            append!(all_string, "RANDOM,$(my_g),$(all_l[i]),$(all_th[j]),$avg\n")
 
         end
     end
@@ -122,11 +127,12 @@ end
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
-    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    # all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
     all_avg = []
     all_string = []
-    for i in 1:3 # l
+    for i in 1:4 # l
         for j in 1:4 # th
             # println("RANDOM -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
             thresholds = Dict()
@@ -155,7 +161,8 @@ result = @distributed (append!) for graph in graphs
             end
             avg = avg / iter
             append!(all_avg, [avg])
-            append!(all_string, "DEG \t| $(my_g) \t| $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+            # append!(all_string, "DEG \t| $(my_g) \t| $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+            append!(all_string, "DEG,$(my_g),$(all_l[i]),$(all_th[j]),$avg\n")
         end
     end
     f =  open("././results/deg/$(graph).txt", "w")
@@ -170,12 +177,13 @@ end
 result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
-    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
+    all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    # all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
     all_avg = []
     all_string = []
 
-    for i in 1:3 # l
+    for i in 1:4 # l
         for j in 1:4 # th
             # println("MAX DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
             thresholds = Dict()
@@ -204,7 +212,8 @@ result = @distributed (append!) for graph in graphs
             end
             avg = avg / iter
             append!(all_avg, [avg])
-            append!(all_string, "MAX DEG \t| $(my_g) \t| $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+            # append!(all_string, "MAX DEG \t| $(my_g) \t| $(all_l[i]) \t| $(all_th[j]) \t | $avg\n")
+            append!(all_string, "MAX DEG,$(my_g),$(all_l[i]),$(all_th[j]),$avg\n")
         end
     end
     f =  open("././results/maxdeg/$(graph).txt", "w")
