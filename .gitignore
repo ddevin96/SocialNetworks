@@ -30,3 +30,5 @@ Manifest.toml
 results/
 backup/
 imgs/
+
+*.png

@@ -3,9 +3,8 @@ function testSetWithDiffusion(G, S, thresholds, l)
     active[1] = S
     i = 2
     complete = false
-
+    # println("thresholds inside", thresholds)
     while true
-        # println("step $i: ")
         active[i] = deepcopy(active[i-1])
         # for v in vertices(G)
          for v in collect(active[i-1])
@@ -14,11 +13,14 @@ function testSetWithDiffusion(G, S, thresholds, l)
                     continue
                 end
                 intersection = intersect(active[i-1], Set(all_neighbors(G,u)))
+                # println("intersection ", length(intersection))
                 if length(intersection) >= thresholds[u]
+                    # println("add $u to active at step $i")
                     push!(active[i], u)
                 end
             end
         end
+        # println("step $i: len active $(length(active[i]))")
         if length(active[i]) >= l
             complete = true
             break
@@ -364,53 +366,53 @@ function algoMaxDegree(g, thresholds, l)
     for v in vertices(g)
         push!(V, v)
     end
-
     
     # cast V into a list
     my_list = collect(V)
     # order the list by degree of nodes
     sort!(my_list, by = x -> degree(g, x), rev = true)
     # create a list of boolean
-    my_list_bool = Dict{Int64, Bool}()
+    # my_list_bool = Dict{Int64, Bool}()
     my_list_degree = Dict{Int64, Int64}()
     for v in my_list
-        my_list_bool[v] = false
+        # my_list_bool[v] = false
         my_list_degree[v] = degree(g, v)
     end
     # my_list_index = 1
+    my_list_temp = deepcopy(my_list_degree)
 
     while length(my_list) > 0
-
-        # println("my_list_size $(length(my_list))")
-        # println("g size $(nv(gr))")
+        # println("len my_list $(length(my_list))")
         ActiveS = Set{Int64}()
-        
         # pop the first element of my_list
         # sort by degree on residual graph
         # threshold decrease by 1 for each node that go missing
-        u = popfirst!(my_list)
+        u = my_list[1]
         max = 0
-        for key in keys(my_list_degree)
-            if my_list_degree[key] > max
-                max = my_list_degree[key]
+        for key in keys(my_list_temp)
+            if my_list_temp[key] > max
+                max = my_list_temp[key]
                 u = key
             end
         end
+        # println("u $u")
         push!(S, u)
 
-        ActiveS = diffusionMiaWithBool(g, S, thresholds, my_list_bool)
+        ActiveS = diffusionMia(g, S, thresholds)
         # println("len ActiveS $(length(ActiveS))")
         if length(ActiveS) < l
             # remove node and actives from graph
+            my_list_temp = deepcopy(my_list_degree)
             for v in ActiveS
-                my_list_bool[v] = true
+                # my_list_bool[v] = true
                 deleteat!(my_list, findall(x -> x == v, my_list))
+                # deleteat!(my_list_temp, findall(x -> x == v, my_list_temp))
+                delete!(my_list_temp, v)
                 for u in all_neighbors(g,v)
-                    if thresholds[u] > 1
-                        thresholds[u] -= 1
-                    end
-                    if my_list_degree[u] > 0
-                        my_list_degree[u] -= 1
+                    if haskey(my_list_temp, u)
+                        if my_list_temp[u] > 0
+                            my_list_temp[u] -= 1
+                        end
                     end
                 end
             end

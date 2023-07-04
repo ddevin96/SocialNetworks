@@ -14,6 +14,7 @@ iter = 10
 # ca-Astro too much slow
 # graphs = ["karate.edges", "ca-AstroPh.edges", "ca-GrQc.edges", "ca-HepTh.edges", "CollegeMsg.edges", "email-EU-core.edges", "facebook.edges", "p2p.edges"]
 graphs = ["karate.edges", "ca-GrQc.edges", "ca-HepTh.edges", "CollegeMsg.edges", "email-EU-core.edges", "facebook.edges", "p2p.edges"]
+# graphs = ["karate.edges"]
 
 # write_graph_info(graphs)
 
@@ -23,17 +24,19 @@ result = @distributed (append!) for graph in graphs
     my_g = split(graph, ".")[1]
 
     all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
-    # all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
+    # all_l = [length(vertices(g)) * 0.5]
     all_th = [0.25, 0.5, 0.75, 1.0]
+    # all_th = [0.75]
     all_avg = []
     all_string = []
-    for i in 1:4 # l
-        for j in 1:4 # th
+    for i in 1:length(all_l) # l
+        for j in 1:length(all_th) # th
             thresholds = Dict()
             if j != 4
                 for v in vertices(g)
                     thresholds[v] = degree(g, v) * all_th[j]
                 end
+                # println(thresholds)
             else
                 for v in vertices(g)
                     thresholds[v] = rand(1:degree(g, v))
@@ -45,12 +48,12 @@ result = @distributed (append!) for graph in graphs
             for iteration in 1:iter
                 println("MTS -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
                 S, activeS = MTS(g, thresholds, l)
+                # println("S length: $(length(S))")
                 # if !testSetWithDiffusion(g, S, thresholds, l)
                 #     println("SET NOT OK -- MTS -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
                 # else
                 #     println("SET OK -- MTS -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
                 # end
-
                 avg += length(S)
             end
             avg = avg / iter
@@ -64,7 +67,7 @@ result = @distributed (append!) for graph in graphs
     # write all_string to file
     # open a file 
     f =  open("././results/mts/$(graph).txt", "w")
-    write(f, "ALGO \t| GRAPH \t| l \t| th \t| avg\n")
+    write(f, "ALGO,GRAPH,l,th,avg\n")
     for i in 1:length(all_string)
         write(f, all_string[i])
     end
@@ -116,7 +119,7 @@ result = @distributed (append!) for graph in graphs
         end
     end
     f =  open("././results/rand/$(graph).txt", "w")
-    write(f, "ALGO \t| GRAPH \t\t| l \t| th \t| avg\n")
+    write(f, "ALGO,GRAPH,l,th,avg\n")
     for i in 1:length(all_string)
         write(f, all_string[i])
     end
@@ -166,7 +169,7 @@ result = @distributed (append!) for graph in graphs
         end
     end
     f =  open("././results/deg/$(graph).txt", "w")
-    write(f, "ALGO \t| GRAPH \t\t| l \t| th \t| avg\n")
+    write(f, "ALGO,GRAPH,l,th,avg\n")
     for i in 1:length(all_string)
         write(f, all_string[i])
     end
@@ -178,19 +181,21 @@ result = @distributed (append!) for graph in graphs
     g = load_my_graph("data/$graph")
     my_g = split(graph, ".")[1]
     all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75, length(vertices(g))]
+    # all_l = [length(vertices(g)) * 0.5]
     # all_l = [length(vertices(g)) * 0.25, length(vertices(g)) * 0.5, length(vertices(g)) * 0.75]
     all_th = [0.25, 0.5, 0.75, 1.0]
+    # all_th = [0.75]
     all_avg = []
     all_string = []
-
-    for i in 1:4 # l
-        for j in 1:4 # th
+    for i in 1:length(all_l) # l
+        for j in 1:length(all_th) # th
             # println("MAX DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j])")
             thresholds = Dict()
             if j != 4
                 for v in vertices(g)
                     thresholds[v] = degree(g, v) * all_th[j]
                 end
+                # println(thresholds)
             else
                 for v in vertices(g)
                     thresholds[v] = rand(1:degree(g, v))
@@ -201,8 +206,11 @@ result = @distributed (append!) for graph in graphs
             #iterate iter times
             for iteration in 1:iter
                 println("MAX DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
-
+            
                 S, Active_S = algoMaxDegree(g, thresholds, l)
+                # println("length S: $(length(S))")
+                # println("S: $(S)")
+                # println(all_neighbors(g, collect(S)[1]))
                 # if !testSetWithDiffusion(g, S, thresholds, l)
                 #     println("SET NOT OK -- MAX DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
                 # else
@@ -217,7 +225,7 @@ result = @distributed (append!) for graph in graphs
         end
     end
     f =  open("././results/maxdeg/$(graph).txt", "w")
-    write(f, "ALGO \t| GRAPH \t\t| l \t| th \t| avg\n")
+    write(f, "ALGO,GRAPH,l,th,avg\n")
     for i in 1:length(all_string)
         write(f, all_string[i])
     end
