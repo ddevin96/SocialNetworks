@@ -159,6 +159,7 @@ result = @distributed (append!) for graph in graphs
                     println("DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
 
                 my_time = @elapsed best_k, best_S = algoDegree(g, thresholds, l)
+                avg_time += my_time
                 # if !testSetWithDiffusion(g, best_S, thresholds)
                 #     println("SET NOT OK -- DEGREE -- Graph $(graph) l: $(all_l[i]) th: $(all_th[j]) iteration: $iteration")
                 # else
